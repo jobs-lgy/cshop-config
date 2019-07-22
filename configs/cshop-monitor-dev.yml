@@ -1,0 +1,42 @@
+server:
+  port: 7010
+
+spring:
+  application:
+    name: cshop-monitor
+  cloud:
+    inetutils:
+      ignoredInterfaces:  #禁用网卡
+        - docker0
+        - veth*
+        - en0
+        - br*
+  mail:
+    host: smtp.163.com
+    username: junezchen@163.com
+    password: '{cipher}13c403a643824a1c2607ebb60960a4a8367832a199cd4d1af882976861195ef2'
+    properties:
+      mail.debug: false
+      mail.smtp.auth: true
+  boot:
+    admin:
+      notify:
+        mail:
+          to: 342803737@qq.com
+          from: junezcloud@163.com
+      #          ignore-changes: UNKNOWN:UP
+      routes:
+        endpoints: env,metrics,dump,jolokia,info,configprops,trace,logfile,refresh,flyway,liquibase,heapdump,loggers,auditevents,hystrix.stream
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://127.0.0.1:8761/eureka
+    registry-fetch-interval-seconds: 5
+  instance:
+    prefer-ip-address: true #当你获取host时，返回的不是主机名，而是ip
+    instance-id: ${spring.application.name}:${server.port}
+    leaseRenewalIntervalInSeconds: 10
+    health-check-url-path: /actuator/health
+    metadata-map:
+      startup: ${random.int}    #needed to trigger info and endpoint update after restart

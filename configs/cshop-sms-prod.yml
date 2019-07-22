@@ -1,0 +1,72 @@
+server:
+  port: 7030
+
+spring:
+  application:
+    name: cshop-sms
+  boot:
+    admin:
+      client:
+        instance:
+          service-base-url: http://192.168.56.100:7010
+
+  zipkin:
+    base-url: http://192.168.56.100:9411
+  sleuth:
+    sampler:
+      probability: 1
+
+  cloud:
+    ignoredInterfaces:  #禁用网卡
+      - docker0
+      - veth*
+      - en0
+      - br*
+    stream:
+      default:
+        content-type: application/json
+      defaultBinder: defaultRabbit
+      bindings:
+        smsInput:
+          destination: cshop.sms
+          group: group-1  # 具体分组,对应队列名称,并且持久化队列
+          consumer:
+            maxAttempts: 1
+      binders:
+        defaultRabbit:
+          type: rabbit
+
+  rabbitmq:
+    virtual-host: /cshop
+    username: cshop
+    password: cshop
+    host: 192.168.56.100
+    port: 5672
+    publisher-confirms: true #生产者确认机制，确保消息会正确发送，如果发送失败会有错误回执，从而触发重试
+    template:
+      retry:
+        enabled: true #开启失败重试
+        max-interval: 210000ms #最长重试间隔，超过这个间隔将不再重试
+        initial-interval: 10000ms #第一次重试的间隔时长
+        multiplier: 2 #下次重试间隔的倍数，此处是2即下次重试间隔是上次的2倍
+
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://192.168.56.100:8761/eureka
+    registry-fetch-interval-seconds: 5
+  instance:
+    lease-renewal-interval-in-seconds: 5 # 每隔5秒发送一次心跳
+    lease-expiration-duration-in-seconds: 10 # 10秒不发送就过期
+    prefer-ip-address: true
+    ip-address: 127.0.0.1
+    instance-id: ${spring.application.name}:${server.port}
+
+
+cshop:
+  sms:
+    accessKeyId: LTAIc259TULYzaS7
+    accessKeySecret: 1uh79I1UAmwQ4YWsSmOgxw7JEBGA0v
+    signName: CShop商城
+    verifyCodeTemplate: SMS_148614415
